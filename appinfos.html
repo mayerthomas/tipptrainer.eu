@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tipptrainer.eu</title>
+	<meta name="description" content="Tippen Lernen | Üben | Abschriften anfertigen - 100 % datenschutzkonform, ohne Anmeldung und direkt im Browser.">
+    <link rel="canonical" href="https://tipptrainer.eu/appinfos.html" />
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="144x144" href="/favicon-144x144.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png">
+    
+    <!-- Eigene Stylesheets (mit Version-Tag zur Vermeidung von Caching-Problemen) -->
+    <link rel="stylesheet" href="style.css?v=1.0.2">
+
+    <!-- Konfiguration & Zentrale Logik -->
+    <script src="config.js?v=1.0.2" defer></script>
+</head>
+<body class="min-h-screen p-4 md:p-8 font-sans text-gray-600 bg-gray-50">
+
+    <div class="max-w-3xl mx-auto">
+
+        <!-- ==========================================
+             DYNAMISCHER HEADER (injiziert via config.js)
+             ========================================== -->
+        <div id="app-header"></div>
+
+        <!-- ==========================================
+             HAUPTINHALT: PROGRAMMFUNKTIONEN & INFOS
+             ========================================== -->
+        <section class="mb-6 p-6 md:p-10 bg-white border border-gray-300 rounded-xl shadow-sm">
+            <h2 class="mb-6 text-2xl font-bold text-gray-600">Funktionen von tipptrainer.eu</h2>
+
+            <div class="space-y-6 leading-relaxed text-gray-600">
+
+                <div>
+                    <h3 class="font-semibold text-gray-600">1. Abschrift vorbereiten</h3>
+                    <p class="mt-2 text-sm">
+                        Zu Beginn trägst du deinen Vornamen, Nachnamen und deine Klasse ein, damit diese später auf deiner Auswertung erscheinen. Anschließend stellst du über den Schieberegler die gewünschte Dauer der Abschrift (bis zu 20 Minuten) ein.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-gray-600">2. Textvorlagen & Eigene Dateien</h3>
+                    <p class="mt-2 text-sm">
+                        Du kannst entweder eine eigene Textdatei (<code>.txt</code> im UTF-8- oder ANSI-Format) von deinem Gerät hochladen oder direkt eine der integrierten Vorlagen auswählen. Zur Auswahl stehen aufbauende Finger-Lektionen, gezielte Wortübungen sowie freie Sachtexte.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-gray-600">3. Durchführung & Live-Unterstützung</h3>
+                    <p class="mt-2 text-sm">
+                        Der Countdown startet erst, sobald du das erste Zeichen im Eingabefeld tippst. Während des Schreibens wird das aktuell zu tippende Zeichen im Originaltext farbig hervorgehoben und der Text scrollt automatisch mit. Oben siehst du jederzeit die verbleibende Zeit und deine bisherigen Anschläge. Falls du früher fertig bist, kannst du die Abschrift vorzeitig beenden.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-gray-600">4. Fair-Play & Anti-Cheat-Schutz</h3>
+                    <p class="mt-2 text-sm">
+                        Um faire Bedingungen für Übungen und Leistungsnachweise zu schaffen, ist das Einfügen von kopiertem Text (Paste sowie Drag &amp; Drop) technisch gesperrt. Zudem warnt dich der Browser, falls du den Tab während einer laufenden Abschrift versehentlich schließen möchtest.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-gray-600">5. Intelligente Auswertung nach Prüfungsstandard</h3>
+                    <p class="mt-2 text-sm">
+                        Nach Ablauf der Zeit oder am Textende erstellt das Programm automatisch eine detaillierte Auswertung mit Gesamtanschlägen, Anschlägen pro Minute (APM), Fehleranzahl und Fehlerquotient in Prozent:
+                    </p>
+                    <ul class="mt-2 pl-6 space-y-1 text-sm list-disc">
+                        <li><strong>Anschlagszählung:</strong> Großbuchstaben und Sonderzeichen, die mit der Umschalttaste (Shift) getippt werden, zählen regulär als zwei Anschläge.</li>
+                        <li><strong>Wortfehler-Regel:</strong> Mehrere Tippfehler oder Auslassungen (markiert durch <code>^</code>) innerhalb desselben Wortes werden zu maximal einem einzigen Fehler zusammengefasst.</li>
+                        <li><strong>Letztes Wort:</strong> Tippfehler im allerletzten Wort vor Ablauf der Zeit werden nicht als Fehler gewertet; die Anschlagszählung endet in diesem Fall exakt vor dem ersten Fehler im letzten Wort.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-gray-600">6. Druckansicht & 100 % Datenschutz</h3>
+                    <p class="mt-2 text-sm">
+                        Über den Button „Drucken" lässt sich das Ergebnis als übersichtliches Prüfungsblatt auf Papier ausdrucken oder als PDF speichern. Alle eingegebenen Daten und Texte werden ausschließlich lokal in deinem Browser verarbeitet und niemals im Internet gespeichert oder übertragen.
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==========================================
+             DYNAMISCHER FOOTER (injiziert via config.js)
+             ========================================== -->
+        <div id="app-footer"></div>
+
+    </div>
+</body>
+</html>
+

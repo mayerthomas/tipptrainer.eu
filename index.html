@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tipptrainer.eu</title>
+	<meta name="description" content="Tippen Lernen | Üben | Abschriften anfertigen - kostenlos, 100 % datenschutzkonform, ohne Anmeldung und direkt im Browser.">
+    <link rel="canonical" href="https://tipptrainer.eu" />
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="144x144" href="/favicon-144x144.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png">
+    
+    <!-- Eigene Stylesheets (mit Version-Tag zur Vermeidung von Caching-Problemen) -->
+    <link rel="stylesheet" href="style.css?v=1.0.2">
+
+    <!-- Konfiguration & Zentrale Logik -->
+    <script src="config.js?v=1.0.2" defer></script>
+    <script src="app.js?v=1.0.2" defer></script>
+</head>
+<body class="min-h-screen p-4 md:p-8 font-sans text-gray-600 bg-gray-50">
+
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- ==========================================
+             DYNAMISCHER HEADER (injiziert via config.js)
+             ========================================== -->
+        <div id="app-header"></div>
+
+        <!-- ==========================================
+             1. SETUP-BEREICH (Dateneingabe & Vorlagenauswahl)
+             ========================================== -->
+        <section id="setup-section" class="no-print">
+            <form id="setup-form" class="space-y-6">
+                
+                <!-- Schülerdaten -->
+                <div class="mb-6 p-4 bg-white border border-gray-300 rounded-xl shadow-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block mb-1 text-sm font-semibold uppercase tracking-wider text-gray-600" for="vorname">Vorname</label>
+                            <input type="text" id="vorname" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+                        <div>
+                            <label class="block mb-1 text-sm font-semibold uppercase tracking-wider text-gray-600" for="nachname">Nachname</label>
+                            <input type="text" id="nachname" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+                        <div>
+                            <label class="block mb-1 text-sm font-semibold uppercase tracking-wider text-gray-600" for="klasse">Klasse</label>
+                            <input type="text" id="klasse" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+                    </div>
+                    <p class="mt-2 ml-1 text-xs text-gray-600">Deine Daten werden nur lokal verarbeitet und nicht gespeichert.</p>
+                </div>
+
+                <div class="mb-6 p-4 bg-white border border-gray-300 rounded-xl shadow-sm">
+                    <!-- Slider für die Dauer -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-sm font-semibold uppercase tracking-wider text-gray-600" for="duration-slider">Dauer der Abschrift</label>
+                            <span id="duration-display" class="px-3 py-1 font-mono text-lg font-bold text-sky-600 bg-sky-50 rounded">10:00</span>
+                        </div>
+                        <input type="range" id="duration-slider" min="0" max="1200" step="10" value="600" class="w-full h-2 bg-gray-200 accent-sky-600 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between mt-2 text-xs text-gray-600">
+                            <span>0 Min</span>
+                            <span>20 Min</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6 p-4 bg-white border border-gray-300 rounded-xl shadow-sm">
+                    <!-- Dateiauswahl (Upload oder Vorlage) -->
+                    <div>
+                        <label class="block mb-1 text-sm font-semibold uppercase tracking-wider text-gray-600">Textvorlage wählen</label>
+                        
+                        <!-- Tab-Navigation -->
+                        <div class="flex mb-4 p-1 bg-gray-100 rounded-lg">
+                            <label class="flex-1 text-center cursor-pointer">
+                                <input type="radio" name="text-source" value="upload" class="peer hidden" checked>
+                                <div class="px-4 py-2 text-sm font-medium text-gray-600 rounded-md transition-all peer-checked:text-sky-600 peer-checked:bg-white peer-checked:shadow-sm">
+                                    📂 Eigene Datei hochladen
+                                </div>
+                            </label>
+                            <label class="flex-1 text-center cursor-pointer">
+                                <input type="radio" name="text-source" value="template" class="peer hidden">
+                                <div class="px-4 py-2 text-sm font-medium text-gray-600 rounded-md transition-all peer-checked:text-sky-600 peer-checked:bg-white peer-checked:shadow-sm">
+                                    📄 Vorhandene Vorlage
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Upload Container -->
+                        <div id="file-upload-container">
+                            <input type="file" id="file-input" accept=".txt" required class="w-full px-4 py-2 border border-gray-300 rounded-lg cursor-pointer file:mr-4 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-sky-700 file:bg-sky-50 file:border-0 file:rounded-full hover:file:bg-sky-100">
+                            <p class="mt-2 ml-1 text-xs text-gray-600">Zugelassen: .txt Datei (ANSI oder UTF-8)</p>
+                        </div>
+
+                        <!-- Vorlagen Container -->
+                        <div id="template-select-container" class="hidden">
+                            <select id="template-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                <!-- Optionen werden per JavaScript aus app.js befüllt -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Start-Button -->
+                <div>
+                    <button type="submit" class="w-full py-3 font-medium text-white bg-sky-600 rounded-lg transition-colors hover:bg-sky-700">
+                        Abschrift vorbereiten
+                    </button>
+                </div>
+            </form>
+        </section>
+
+
+        <!-- ==========================================
+             2. TEST-BEREICH (Eigentliche Abschrift)
+             ========================================== -->
+        <!-- MAXIMAL-HÖHE FÜR FULLSCREEN ANGEPASST: Nutzt die Bildschirmhöhe minus Body-Padding -->
+        <section id="test-section" class="hidden flex flex-col h-[calc(100vh)] min-h-[500px] max-h-[1200px] py-2 no-print">
+            
+            <!-- Live-Statistik (Kopfzeile) -->
+            <div class="flex flex-col md:flex-row items-center justify-between shrink-0 mb-3 p-3 bg-white border border-gray-300 rounded-xl shadow-sm">
+                <div class="font-medium text-gray-600">
+                    <span id="student-name-display" class="text-gray-600"></span> | Klasse: <span id="student-class-display" class="text-gray-600"></span>
+                </div>
+                <div class="flex space-x-6 mt-4 md:mt-0 text-lg">
+                    <div class="px-4 py-1 bg-gray-100 rounded-lg">
+                        Zeit: <span id="timer-display" class="font-mono font-bold text-sky-600">00:00</span>
+                    </div>
+                    <div class="px-4 py-1 bg-gray-100 rounded-lg">
+                        Anschläge: <span id="live-anschlaege" class="font-mono font-bold text-green-600">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KOMPLETTE FLEX-STRUKTUR: "min-h-0" zwingt Flexbox dazu, nicht zu "überlaufen" -->
+            <div class="flex flex-col flex-1 gap-3 min-h-0">
+                <!-- Originaltext Anzeige -->
+                <div class="flex flex-col flex-1 min-h-0 p-4 bg-white border border-gray-300 rounded-xl shadow-sm">
+                    <h2 class="shrink-0 mb-2 text-sm font-semibold uppercase tracking-wider text-gray-600">Abzuschreibender Text</h2>
+                    <div id="original-text-display" class="flex-1 min-h-0 p-3 font-mono text-lg leading-relaxed text-gray-600 bg-gray-50 border border-gray-300 rounded-lg overflow-y-auto select-none pre-wrap">
+                        <!-- Wird per JS dynamisch mit hervorgehobenen Zeichen befüllt -->
+                    </div>
+                </div>
+
+                <!-- Eingabefeld & Steuerung -->
+                <div class="flex flex-col flex-1 min-h-0 p-4 bg-white border border-gray-300 rounded-xl shadow-sm">
+                    <h2 class="shrink-0 mb-2 text-sm font-semibold uppercase tracking-wider text-gray-600">Deine Eingabe</h2>
+                    <textarea id="typing-area" class="flex-1 w-full min-h-0 p-3 font-mono text-lg leading-relaxed border border-gray-300 rounded-lg resize-none overflow-y-auto focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="Sobald du den ersten Buchstaben tippst, startet der Timer..." onpaste="return false;" ondrop="return false;" spellcheck="false"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between shrink-0 min-h-[40px]">
+                    <!-- Button: Neue Abschrift -->
+                    <button type="button" onclick="handleNeueAbschriftClick()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg shadow-sm transition-colors hover:text-sky-600 hover:border-sky-300">
+                        <svg class="fill-current" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/></svg>
+                        Neue Abschrift
+                    </button>
+
+                    <!-- Button: Vorzeitig beenden -->
+                    <button type="button" id="btn-early-finish" onclick="handleEarlyFinishClick()" class="hidden inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-300 rounded-lg shadow-sm transition-colors hover:text-red-700 hover:bg-red-100">
+                        Abschrift vorzeitig beenden
+                        <svg class="fill-current" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ==========================================
+             3. AUSWERTUNGS-BEREICH (Ergebnisse)
+             ========================================== -->
+        <section id="result-section" class="hidden">
+            
+            <div class="mb-6 p-4 bg-white border border-gray-300 rounded-xl shadow-sm">
+                
+                <!-- Auswertungs-Header (Web) -->
+                <div class="flex items-center justify-between mb-4 no-print">
+                    <h1 class="text-3xl font-light text-gray-600">Auswertung der Abschrift</h1>
+                    <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg transition-colors hover:bg-sky-700">
+                        <svg class="fill-current" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M640-640v-120H320v120h-80v-200h480v200h-80Zm-480 80h640-640Zm560 100q17 0 28.5-11.5T760-500q0-17-11.5-28.5T720-540q-17 0-28.5 11.5T680-500q0 17 11.5 28.5T720-460Zm-80 260v-160H320v160h320Zm80 80H240v-160H80v-240q0-51 35-85.5t85-34.5h560q51 0 85.5 34.5T880-520v240H720v160Zm80-240v-160q0-17-11.5-28.5T760-560H200q-17 0-28.5 11.5T160-520v160h80v-80h480v80h80Z"/></svg>
+                        Drucken
+                    </button>
+                </div>
+                
+                <!-- Auswertungs-Header (Druck-optimiert) -->
+                <h1 class="hidden text-3xl font-light text-gray-600 print-only">Auswertung Abschrift</h1>
+                
+
+                <!-- Meta-Daten (Name, Klasse, Datum) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 border border-gray-300 rounded-lg print-meta">
+                    <div><span class="block text-xs uppercase text-gray-600">Name</span><span id="res-name" class="font-medium text-gray-600"></span></div>
+                    <div><span class="block text-xs uppercase text-gray-600">Klasse</span><span id="res-klasse" class="font-medium text-gray-600"></span></div>
+                    <div><span class="block text-xs uppercase text-gray-600">Datum</span><span id="res-datum" class="font-medium text-gray-600"></span></div>
+                </div>
+
+                <!-- Kennzahlen / Statistik -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center print-stats">
+                    <div class="flex flex-col justify-center p-3 bg-gray-50 border border-gray-300 rounded-lg">
+                        <span class="block mb-1 text-[10px] font-semibold uppercase text-gray-600">Anschläge</span>
+                        <span id="res-anschlaege" class="text-2xl font-bold text-gray-600">0</span>
+                    </div>
+                    <div class="flex flex-col justify-center p-3 bg-gray-50 border border-gray-300 rounded-lg">
+                        <span class="block mb-1 text-[10px] font-semibold uppercase text-gray-600">Anschläge / Min</span>
+                        <span id="res-apm" class="text-2xl font-bold text-gray-600">0</span>
+                    </div>
+                    <div class="flex flex-col justify-center p-3 bg-gray-50 border border-gray-300 rounded-lg">
+                        <span class="block mb-1 text-[10px] font-semibold uppercase text-gray-600">Dauer</span>
+                        <span id="res-dauer" class="text-2xl font-bold text-gray-600">00:00</span>
+                    </div>
+                    <div class="flex flex-col justify-center p-3 bg-red-50 border border-red-300 rounded-lg">
+                        <span class="block mb-1 text-[10px] font-semibold uppercase text-red-800">Fehler</span>
+                        <span id="res-fehler" class="text-2xl font-bold text-red-600">0</span>
+                    </div>
+                    <div class="flex flex-col justify-center p-3 bg-sky-50 border border-sky-300 rounded-lg">
+                        <span class="block mb-1 text-[10px] font-semibold uppercase text-sky-800">Fehlerquotient</span>
+                        <span id="res-quotient" class="text-2xl font-bold text-sky-600">0,000 %</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vergleichsansicht: Originaltext vs. Gewerteter Text -->
+            <div class="mb-6 p-4 bg-white border border-gray-300 rounded-xl shadow-sm no-print">
+                <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-600">Abzuschreibender Text (Original)</h2>
+                <div id="res-original-text" class="h-56 p-4 font-mono text-lg leading-relaxed text-gray-600 bg-gray-50 border border-gray-300 rounded-lg overflow-y-auto select-none pre-wrap">
+                    <!-- Wird per JS befüllt -->
+                </div>
+            </div>
+
+            <div class="p-4 bg-white border border-gray-300 rounded-xl shadow-sm">
+                <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-600">Gewerteter Text</h2>
+                <div id="evaluated-text" class="mb-2 p-4 font-mono text-lg leading-relaxed text-gray-600 bg-white border border-gray-300 rounded-lg select-none pre-wrap">
+                    <!-- Wird per JS befüllt (Levenshtein-Auswertung) -->
+                </div>
+                <div class="text-xs text-gray-600">
+                    <span class="font-semibold">Fehlermarkierungen</span>
+                    <ul class="list-disc list-inside">
+                        <li>Falsches Zeichen (z. B. X): <span class="typed-error">X</span> (≙ max. 1 Fehler je Wort)</li>
+                        <li>Falsches Zeichen im letzten Wort (z. B. X): <span class="typed-error-last-word">X</span> (≙ 0 Fehler; Anschlagszählung endet vor Fehler)</li>
+                        <li>Auslassung: <span class="typed-error">^</span> (≙ max. 1 Fehler je Wort)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Abschluss-Navigation -->
+            <div class="flex justify-start mt-6 no-print">
+                <button type="button" onclick="resetApp()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg shadow-sm transition-colors hover:text-sky-600 hover:border-sky-300">
+                    <svg class="fill-current" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/></svg>
+                    Neue Abschrift
+                </button>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             DYNAMISCHER FOOTER (injiziert via config.js)
+             ========================================== -->
+        <div id="app-footer"></div>
+
+    </div>
+
+    <!-- ==========================================
+         POPUP MODAL (Bestätigung bei Abbruch)
+         ========================================== -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 no-print">
+        <div class="w-full max-w-sm mx-4 p-6 bg-white border border-gray-300 rounded-xl shadow-lg">
+            <h3 class="mb-6 text-center text-lg font-medium text-gray-600">Soll die Abschrift wirklich beendet werden?</h3>
+            <div class="flex justify-center space-x-4">
+                <button id="btn-confirm-yes" class="px-6 py-2 font-medium text-white bg-sky-600 rounded-lg transition-colors hover:bg-sky-700">Ja</button>
+                <button id="btn-confirm-no" class="px-6 py-2 font-medium text-gray-600 bg-gray-100 rounded-lg transition-colors hover:bg-gray-200">Nein</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,155 @@
+@import "tailwindcss";
+@source "./";
+
+/**
+ * ==============================================================================
+ * CUSTOM STYLES & DRUCK-OPTIMIERUNG - tipptrainer.eu
+ * ==============================================================================
+ */
+
+/* ------------------------------------------------------------------------------
+ * 1. ALLGEMEINE WEB-STYLES (Darstellung im Browser)
+ * ------------------------------------------------------------------------------ */
+
+/* Erhaltung von Leerzeichen und exakten Zeilenumbrüchen in den Textfeldern */
+.pre-wrap {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Visuelle Hervorhebung für fehlerhafte Eingaben (Substitution / Insertion) */
+.typed-error {
+    background-color: #fca5a5;
+    color: #7f1d1d;
+    text-decoration: underline;
+    text-decoration-style: solid;
+    text-underline-offset: 3px;
+    text-decoration-skip-ink: none;
+    border-radius: 2px;
+}
+
+/* Visuelle Hervorhebung für ausgelassene Zeichen (Deletion) */
+.typed-missing {
+    display: inline-block;
+    width: 5px;
+    height: 1em;
+    background-color: #ef4444;
+    margin: 0 2px;
+    vertical-align: bottom;
+    border-radius: 2px;
+}
+
+/* Visuelle Hervorhebung für das fehlerhafte letzte Wort (Überstrich) */
+.typed-error-last-word {
+    background-color: #00a63e;
+    color: #7f1d1d;
+    text-decoration: overline;
+    text-decoration-style: solid;
+    text-decoration-skip-ink: none;
+    border-radius: 2px;
+}
+
+
+/* ------------------------------------------------------------------------------
+ * 2. PRINT-STYLESHEET (Optimierung für den Schwarz-Weiß-Druck)
+ * ------------------------------------------------------------------------------
+ * Hinweis: !important wird hier bewusst eingesetzt, um die spezifischen 
+ * Tailwind-Utility-Klassen der Screen-Ansicht beim Drucken sicher zu überschreiben.
+ * ------------------------------------------------------------------------------ */
+
+@media print {
+    @page {
+        margin: 1.5cm;
+    }
+
+    html, body {
+        background-color: white !important;
+        font-size: 11pt;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Steuerung der Sichtbarkeit beim Druckvorgang */
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+
+    /* Layout-Anpassungen für das Auswertungs-Grid auf DIN A4 */
+    #result-section {
+        display: block !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    /* Meta-Daten (Name, Klasse, Datum) Layout für den Druck */
+    .print-meta {
+        display: flex !important;
+        justify-content: space-between !important;
+        margin-bottom: 1rem !important;
+        padding: 0.5rem !important;
+        background: none !important;
+    }
+    .print-meta div span:first-child { font-size: 0.65rem; }
+    .print-meta div span:last-child { font-size: 0.95rem; font-weight: bold; }
+
+    /* Statistik-Boxen (Anschläge, Fehler, etc.) Layout für den Druck */
+    .print-stats {
+        display: flex !important;
+        justify-content: space-between !important;
+        gap: 0.5rem !important;
+    }
+    .print-stats > div {
+        flex: 1;
+        padding: 0.5rem !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 4px !important;
+        background: none !important;
+    }
+    .print-stats span:first-child { font-size: 0.60rem !important; }
+    .print-stats span:last-child { font-size: 1.15rem !important; }
+
+    /* Container für den gewerteten Text im Druck */
+    #evaluated-text {
+        font-size: 9.5pt !important;
+        line-height: 1.4 !important;
+        padding: 1rem !important;
+        border: 1px solid #e5e7eb !important;
+    }
+    
+    h1 {
+        font-size: 1.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* --------------------------------------------------------------------------
+     * Schwarz-Weiß-Optimierung für Fehler (Toner-sparend & Kontrastreich) 
+     * -------------------------------------------------------------------------- */
+
+    /* Falsch getippte Buchstaben: Keine Hintergrundfarbe, dafür fett und einfach unterstrichen */
+    .typed-error {
+        background-color: transparent !important;
+        color: #000 !important;
+        font-weight: bold !important;
+        text-decoration: underline solid #000 !important;
+        text-underline-offset: 3px !important;
+        text-decoration-skip-ink: none !important;
+    }
+
+    /* Ausgelassene Zeichen: Tiefschwarzer Block statt farbig, um maximalen Kontrast zu garantieren */
+    .typed-missing {
+        background-color: #000 !important;
+        width: 8px !important;
+        border: 1px solid #000 !important;
+    }
+    
+    /* Schwarz-Weiß-Optimierung für das letzte Wort (einfacher Überstrich) */
+    .typed-error-last-word {
+        background-color: transparent !important;
+        color: #000 !important;
+        font-weight: bold !important;
+        text-decoration: overline solid #000 !important;
+        text-decoration-skip-ink: none !important;
+    }
+}
