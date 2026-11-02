@@ -53,6 +53,28 @@ Das Projekt verzichtet bewusst auf komplexe Frameworks oder serverseitige Abhän
 
 ---
 
+## ⚙️ Zentrale Konfiguration (`config.js`)
+
+Alle standort- und projektspezifischen Einstellungen werden zentral in einer einzigen Datei – der **`config.js`** – verwaltet. Dadurch müssen die HTML-Dateien bei eigener Bereitstellung oder Updates nicht manuell durchsucht und angepasst werden:
+
+* **Anwendungs-Metadaten & Update-Prüfung:**
+  * `APP_NAME`: Name der Anwendung (Standard: `"tipptrainer.eu"`).
+  * `APP_VERSION`: Aktuelle Programmversion (wird automatisch im Footer sowie auf dem Ausdruck angezeigt).
+  * `APP_YEAR`: Erscheinungs-/Copyright-Jahr im Footer.
+  * `CHECK_FOR_UPDATES`: Schaltet die automatische Update-Prüfung ein (`true`) oder aus (`false`). Ist sie aktiviert, gleicht die App einmal pro Sitzung die lokale Version mit dem GitHub-Repository (`GITHUB_REPO`) ab und zeigt bei verfügbaren Updates ein dezentes rotes Ausrufezeichen im Footer sowie einen Hinweisbanner unter `appinfos.html` an.
+* **Impressums- & Kontaktdaten (`IMPRESSUM`):**
+  * `institution`: Name der Schule, Behörde oder des Betreibers.
+  * `name`: Vor- und Nachname der verantwortlichen Person.
+  * `street`: Straße und Hausnummer.
+  * `city`: Postleitzahl und Ort.
+  * `email`: Kontakt-E-Mail-Adresse (wird in `impressum-datenschutz.html` automatisch verlinkt).
+* **Übungsvorlagen (`templateDirectory` & `templateFiles`):**
+  * Bestimmt den Ordnerpfad (Standard: `'templates/'`) sowie die Liste und Reihenfolge aller im Auswahlmenü verfügbaren `.txt`-Übungsdateien. Eigene Vorlagen können einfach im Ordner `templates/` abgelegt und hier im Array ergänzt werden.
+* **Zentrale Layout-Komponenten (`headerHTML` & `footerHTML`):**
+  * Steuert seitenübergreifend das Logo, die Untertitel sowie die Fußzeilen-Navigation nach dem DRY-Prinzip (*Don't Repeat Yourself*).
+
+---
+
 ## 💻 Lokale Ausführung & Entwicklung
 
 Da es sich um eine rein statische Webanwendung handelt, wird keine Datenbank und kein Backend benötigt.

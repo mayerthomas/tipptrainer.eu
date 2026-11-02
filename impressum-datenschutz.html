@@ -11,11 +11,11 @@
     <link rel="icon" type="image/png" sizes="144x144" href="/favicon-144x144.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png">
     
-    <!-- Eigene Stylesheets (mit Version-Tag zur Vermeidung von Caching-Problemen) -->
-    <link rel="stylesheet" href="style.css?v=1.0.2">
+    <!-- Eigene Stylesheets -->
+    <link rel="stylesheet" href="style.css">
 
     <!-- Konfiguration & Zentrale Logik -->
-    <script src="config.js?v=1.0.2" defer></script>
+    <script src="config.js" defer></script>
 </head>
 <body class="min-h-screen p-4 md:p-8 font-sans text-gray-600 bg-gray-50">
 
@@ -33,22 +33,15 @@
             <h2 class="mb-6 text-2xl font-bold text-gray-600">Impressum</h2>
 
             <div class="space-y-6 leading-relaxed text-gray-600">
-                <!-- Kontaktdaten -->
+                <!-- Kontaktdaten (werden dynamisch aus config.js geladen) -->
                 <div>
                     <h3 class="font-semibold text-gray-600">Angaben gemäß § 5 DDG</h3>
-                    <p class="mt-2 text-sm">
-                        [Schule]<br>
-                        [Vorname / Nachname]<br>
-                        [Straße / Hausnummer]<br>
-                        [PLZ / Ort]
-                    </p>
+                    <p id="impressum-address" class="mt-2 text-sm"></p>
                 </div>
 
                 <div>
                     <h3 class="font-semibold text-gray-600">Kontakt</h3>
-                    <p class="mt-2 text-sm">
-                        E-Mail: <a href="mailto:e-mail-adresse" class="text-sky-600 hover:underline">E-Mail-Adresse</a>
-                    </p>
+                    <p id="impressum-contact" class="mt-2 text-sm"></p>
                 </div>
 
                 <!-- Rechtliche Hinweise -->
@@ -115,7 +108,17 @@
                 </div>
 
                 <div>
-                    <h3 class="font-semibold text-gray-600">5. Ihre Rechte</h3>
+                    <h3 class="font-semibold text-gray-600">5. Automatische Versionsprüfung (GitHub)</h3>
+                    <p class="mt-2 text-sm">
+                        Sofern in der Konfiguration aktiviert, prüft die Anwendung einmalig pro Browser-Sitzung im Hintergrund, ob im öffentlichen Projekt-Repository auf GitHub (<code>raw.githubusercontent.com</code>, betrieben durch die GitHub Inc., USA bzw. GitHub B.V., Niederlande) eine neuere Programmversion vorliegt. Hierbei wird technisch bedingt die IP-Adresse Ihres Anschlusses an GitHub übermittelt; eingegebene Nutzer- oder Schülerdaten werden dabei zu keinem Zeitpunkt übertragen. Das Ergebnis der Prüfung wird lediglich temporär für die Dauer der Sitzung im Browser (<code>sessionStorage</code>) vermerkt. Rechtsgrundlage ist das berechtigte Interesse an der Bereitstellung aktueller und sicherer Software gemäß Art. 6 Abs. 1 lit. f DSGVO.
+                    </p>
+                    <p class="mt-2 text-sm">
+                        <strong>Hinweis für Administratoren eigener Instanzen:</strong> Diese automatische Versionsprüfung kann jederzeit in der zentralen Konfigurationsdatei (<code>config.js</code>) über die Einstellung <code>CHECK_FOR_UPDATES = false</code> vollständig deaktiviert werden.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-gray-600">6. Ihre Rechte</h3>
                     <p class="mt-2 text-sm">
                         Sie haben im Rahmen der geltenden gesetzlichen Bestimmungen jederzeit das Recht auf unentgeltliche Auskunft über Ihre gespeicherten personenbezogenen Daten, deren Herkunft und Empfänger und den Zweck der Datenverarbeitung und ggf. ein Recht auf Berichtigung, Einschränkung der Verarbeitung oder Löschung dieser Daten. Da wir jedoch (wie in Punkt 3 beschrieben) keine Eingabedaten von Ihnen speichern, können sich Auskunftsersuchen lediglich auf die temporären Server-Logfiles (IP-Adresse) beziehen.
                     </p>

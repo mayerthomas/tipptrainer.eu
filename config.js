@@ -9,8 +9,21 @@
  */
 
 const APP_NAME = "tipptrainer.eu";
-const APP_VERSION = "1.0.2";
+const APP_VERSION = "1.0.3";
 const APP_YEAR = "2026";
+
+// Automatische Versionsprüfung auf GitHub (für selbst gehostete Instanzen)
+const CHECK_FOR_UPDATES = true;
+const GITHUB_REPO = "mayerthomas/tipptrainer.eu";
+
+// Kontaktdaten für Impressum & Datenschutz (impressum-datenschutz.html)
+const IMPRESSUM = {
+    institution: "[Schule / Institution]",
+    name: "[Vorname / Nachname]",
+    street: "[Straße / Hausnummer]",
+    city: "[PLZ / Ort]",
+    email: "[E-Mail-Adresse]"
+};
 
 /**
  * ------------------------------------------------------------------------------
@@ -155,7 +168,10 @@ const headerHTML = `
 const footerHTML = `
     <div class="flex flex-col md:flex-row items-center justify-center gap-2 mt-4 text-center text-sm text-sky-600 no-print">
         <a href="index.html" class="pl-2 pr-2 bg-gray-200 rounded-full transition-colors hover:text-sky-800 hover:bg-gray-300">Startseite</a>
-        <a href="appinfos.html" class="pl-2 pr-2 bg-gray-200 rounded-full transition-colors hover:text-sky-800 hover:bg-gray-300">App-Version ${APP_VERSION} &copy; ${APP_YEAR}</a>
+        <a href="appinfos.html" class="inline-flex items-center pl-2 pr-2 bg-gray-200 rounded-full transition-colors hover:text-sky-800 hover:bg-gray-300">
+            <span>App-Version ${APP_VERSION} &copy; ${APP_YEAR}</span>
+            <span id="update-badge" class="hidden items-center justify-center w-4 h-4 ml-1 text-[10px] font-bold text-white bg-red-600 rounded-full" title="Neue Version auf GitHub verfügbar!">!</span>
+        </a>
         <a href="impressum-datenschutz.html" class="pl-2 pr-2 bg-gray-200 rounded-full transition-colors hover:text-sky-800 hover:bg-gray-300">Impressum & Datenschutz</a>
     </div>
 
@@ -184,6 +200,102 @@ document.addEventListener('DOMContentLoaded', () => {
     if (footerContainer) {
         footerContainer.innerHTML = footerHTML;
     }
+
+    // 3. Impressumsdaten injizieren, falls die Container existieren
+    const addressContainer = document.getElementById('impressum-address');
+    if (addressContainer) {
+        addressContainer.innerHTML = `
+            ${IMPRESSUM.institution}<br>
+            ${IMPRESSUM.name}<br>
+            ${IMPRESSUM.street}<br>
+            ${IMPRESSUM.city}
+        `;
+    }
+
+    const contactContainer = document.getElementById('impressum-contact');
+    if (contactContainer) {
+        contactContainer.innerHTML = `
+            E-Mail: <a href="mailto:${IMPRESSUM.email}" class="text-sky-600 hover:underline">${IMPRESSUM.email}</a>
+        `;
+    }
+
+    // 4. Optionaler Update-Check gegen GitHub
+    if (CHECK_FOR_UPDATES) {
+        checkGitHubVersion();
+    }
 });
+
+/**
+ * Vergleicht zwei Versionsnummern im Format MAJOR.MINOR.PATCH (z. B. "1.0.2" vs "1.0.3").
+ * @returns {boolean} True, wenn remoteVersion neuer als localVersion ist.
+ */
+function isNewerVersion(localVersion, remoteVersion) {
+    const localParts = localVersion.split('.').map(Number);
+    const remoteParts = remoteVersion.split('.').map(Number);
+    const len = Math.max(localParts.length, remoteParts.length);
+
+    for (let i = 0; i < len; i++) {
+        const l = localParts[i] || 0;
+        const r = remoteParts[i] || 0;
+        if (r > l) return true;
+        if (r < l) return false;
+    }
+    return false;
+}
+
+/**
+ * Blendet das rote Ausrufezeichen im Footer sowie das Banner auf appinfos.html ein.
+ */
+function showUpdateNotification(latestVersion) {
+    const badge = document.getElementById('update-badge');
+    if (badge) {
+        badge.classList.remove('hidden');
+        badge.classList.add('inline-flex');
+        badge.title = `Neue Version ${latestVersion} auf GitHub verfügbar!`;
+    }
+
+    const banner = document.getElementById('update-banner');
+    const versionText = document.getElementById('update-version-text');
+    if (banner && versionText) {
+        versionText.textContent = latestVersion;
+        banner.classList.remove('hidden');
+    }
+}
+
+/**
+ * Prüft einmal pro Browser-Sitzung über GitHub, ob eine neuere APP_VERSION vorliegt.
+ */
+function checkGitHubVersion() {
+    try {
+        const cachedVersion = sessionStorage.getItem('tipptrainer_latest_version');
+        if (cachedVersion) {
+            if (isNewerVersion(APP_VERSION, cachedVersion)) {
+                showUpdateNotification(cachedVersion);
+            }
+            return;
+        }
+
+        fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/main/config.js`)
+            .then(response => {
+                if (!response.ok) throw new Error("GitHub-Abfrage fehlgeschlagen");
+                return response.text();
+            })
+            .then(text => {
+                const match = text.match(/const\s+APP_VERSION\s*=\s*["']([^"']+)["']/);
+                if (match && match[1]) {
+                    const latestVersion = match[1].trim();
+                    sessionStorage.setItem('tipptrainer_latest_version', latestVersion);
+                    if (isNewerVersion(APP_VERSION, latestVersion)) {
+                        showUpdateNotification(latestVersion);
+                    }
+                }
+            })
+            .catch(() => {
+                // Lautlos ignorieren (z. B. wenn offline oder durch Schul-Firewall blockiert)
+            });
+    } catch (e) {
+        // Ignorieren, falls sessionStorage deaktiviert ist
+    }
+}
 
 console.log(`${APP_NAME} gestartet - Version ${APP_VERSION}`);

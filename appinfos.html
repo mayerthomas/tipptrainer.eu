@@ -11,11 +11,11 @@
     <link rel="icon" type="image/png" sizes="144x144" href="/favicon-144x144.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png">
     
-    <!-- Eigene Stylesheets (mit Version-Tag zur Vermeidung von Caching-Problemen) -->
-    <link rel="stylesheet" href="style.css?v=1.0.2">
+    <!-- Eigene Stylesheets -->
+    <link rel="stylesheet" href="style.css">
 
     <!-- Konfiguration & Zentrale Logik -->
-    <script src="config.js?v=1.0.2" defer></script>
+    <script src="config.js" defer></script>
 </head>
 <body class="min-h-screen p-4 md:p-8 font-sans text-gray-600 bg-gray-50">
 
@@ -25,6 +25,16 @@
              DYNAMISCHER HEADER (injiziert via config.js)
              ========================================== -->
         <div id="app-header"></div>
+
+        <!-- ==========================================
+             UPDATE-BENACHRICHTIGUNG (wird bei neuer Version via config.js eingeblendet)
+             ========================================== -->
+        <div id="update-banner" class="hidden mb-6 p-4 text-sm text-red-800 bg-red-50 border border-red-300 rounded-xl shadow-sm no-print">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <span><strong>Update verfügbar:</strong> Eine neue Programmversion (<span id="update-version-text" class="font-bold"></span>) steht bereit!</span>
+                <a href="https://github.com/mayerthomas/tipptrainer.eu" target="_blank" rel="noopener noreferrer" class="shrink-0 px-3 py-1 font-semibold text-white bg-red-600 rounded-lg transition-colors hover:bg-red-700">Jetzt auf GitHub ansehen &rarr;</a>
+            </div>
+        </div>
 
         <!-- ==========================================
              HAUPTINHALT: PROGRAMMFUNKTIONEN & INFOS
@@ -78,6 +88,13 @@
                     <h3 class="font-semibold text-gray-600">6. Druckansicht & 100 % Datenschutz</h3>
                     <p class="mt-2 text-sm">
                         Über den Button „Drucken" lässt sich das Ergebnis als übersichtliches Prüfungsblatt auf Papier ausdrucken oder als PDF speichern. Alle eingegebenen Daten und Texte werden ausschließlich lokal in deinem Browser verarbeitet und niemals im Internet gespeichert oder übertragen.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-gray-600">7. Open Source & Eigene Bereitstellung</h3>
+                    <p class="mt-2 text-sm">
+                        Der Quellcode von tipptrainer.eu ist öffentlich auf <a href="https://github.com/mayerthomas/tipptrainer.eu" target="_blank" rel="noopener noreferrer" class="text-sky-600 hover:underline">GitHub</a> verfügbar. Dort finden Lehrkräfte, Schulen und Systembetreuer alle technischen Informationen, um das Programm bei Bedarf auf einem eigenen Schulserver bereitzustellen und individuell anzupassen.
                     </p>
                 </div>
 
