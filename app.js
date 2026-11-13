@@ -204,7 +204,6 @@ function startAppWithBuffer(buffer) {
     updateTimerDisplay();
 
     btnEarlyFinish.classList.add('hidden');
-    btnEarlyFinish.classList.remove('inline-flex');
 
     // UI umschalten
     setupSection.classList.add('hidden');
@@ -277,7 +276,6 @@ function startTimer() {
     startTime = Date.now();
     endTime = startTime + totalSeconds * 1000;
     btnEarlyFinish.classList.remove('hidden');
-    btnEarlyFinish.classList.add('inline-flex');
 
     timerInterval = setInterval(() => {
         const remainingMs = endTime - Date.now();
@@ -501,7 +499,6 @@ function resetApp() {
 
     document.getElementById('live-anschlaege').textContent = "0";
     btnEarlyFinish.classList.add('hidden');
-    btnEarlyFinish.classList.remove('inline-flex');
 
     testSection.classList.add('hidden');
     resultSection.classList.add('hidden');
