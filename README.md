@@ -44,7 +44,10 @@ Das Projekt verzichtet bewusst auf komplexe Frameworks oder serverseitige Abhän
 ├── appinfos.html                # Funktionsübersicht & Programmbeschreibung für Nutzer
 ├── impressum-datenschutz.html   # Impressum & Datenschutzerklärung
 ├── config.js                    # Zentrale Konfiguration (Version, Vorlagenliste, Header/Footer)
-├── app.js                       # Core-Engine (Timer, Anti-Cheat, Highlighter, Levenshtein/Union-Find)
+├── evaluation.js                # Reine Auswertungslogik (QWERTZ-Zählung, Band-DP, Union-Find)
+├── app.js                       # UI- & Event-Engine (Timer, Anti-Cheat, Highlighter, DOM)
+├── test.js                      # Unit-Tests für evaluation.js (ausführbar via: node test.js)
+├── logo.svg                     # Vektor-Logo der Anwendung
 ├── input.css                    # Tailwind-Eingabe-CSS & Custom-Regeln (inkl. @media print)
 ├── style.css                    # Kompiliertes Stylesheet für den Produktiveinsatz
 ├── templates/                   # 46 integrierte .txt-Übungs- und Prüfungsvorlagen

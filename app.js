@@ -11,14 +11,21 @@
 // ==============================================================================
 // 1. KONFIGURATION & STATE (Zustandsverwaltung)
 // ==============================================================================
+(() => {
+
+const MAX_TEXT_LENGTH = 20000;
 
 // Globale Variablen für den Ablauf der Abschrift
 let originalText = "";
 let timerInterval = null;
 let totalSeconds = 0;
 let timeLeft = 0;
+let startTime = 0;
+let endTime = 0;
 let hasStarted = false;
 let isTestActive = false;
+let hasFinished = false;
+let closeConfirmModal = null;
 
 // Anti-Cheat & UI-Rendering Variablen
 let lastValidInput = "";
@@ -51,6 +58,22 @@ const originalTextDisplay = document.getElementById('original-text-display');
 const timerDisplay = document.getElementById('timer-display');
 const liveAnschlaege = document.getElementById('live-anschlaege');
 const btnEarlyFinish = document.getElementById('btn-early-finish');
+
+// Nativen Value-Getter/-Setter sichern und direkte Konsolen-Manipulation
+// (z. B. document.getElementById('typing-area').value = ...) unterbinden
+const nativeValueDesc = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+const getTypingValue = () => nativeValueDesc.get.call(typingArea);
+const setTypingValue = (val) => nativeValueDesc.set.call(typingArea, val);
+
+Object.defineProperty(typingArea, 'value', {
+    get() {
+        return getTypingValue();
+    },
+    set() {
+        alert("Schummeln gilt nicht! Manipulation über die Konsole ist deaktiviert.");
+    },
+    configurable: false
+});
 
 
 // ==============================================================================
@@ -118,7 +141,21 @@ function startAppWithBuffer(buffer) {
         text = decoder.decode(buffer);
     }
 
-    originalText = text.replace(/\r\n/g, '\n').trimEnd();
+    const cleanedText = text.replace(/\r\n/g, '\n').trimEnd();
+
+    // Größen- und Inhaltsprüfung der Textvorlage
+    if (cleanedText.length === 0) {
+        alert("Die ausgewählte Datei enthält keinen Text.");
+        fileInput.value = "";
+        return;
+    }
+    if (cleanedText.length > MAX_TEXT_LENGTH) {
+        alert(`Die ausgewählte Textvorlage ist zu lang (${cleanedText.length.toLocaleString('de-DE')} Zeichen). Maximal erlaubt sind ${MAX_TEXT_LENGTH.toLocaleString('de-DE')} Zeichen.`);
+        fileInput.value = "";
+        return;
+    }
+
+    originalText = cleanedText;
 
     // =====================================================================
     // DOM-Rendering: Text einmalig in Spans zerlegen.
@@ -156,10 +193,18 @@ function startAppWithBuffer(buffer) {
     const yyyy = today.getFullYear();
     document.getElementById('res-datum').textContent = `${dd}.${mm}.${yyyy}`;
 
-    // Timer konfigurieren
+    // Status & Timer konfigurieren
+    hasStarted = false;
+    isTestActive = false;
+    hasFinished = false;
+    startTime = 0;
+    endTime = 0;
     totalSeconds = parseInt(durationSlider.value, 10);
     timeLeft = totalSeconds;
     updateTimerDisplay();
+
+    btnEarlyFinish.classList.add('hidden');
+    btnEarlyFinish.classList.remove('inline-flex');
 
     // UI umschalten
     setupSection.classList.add('hidden');
@@ -170,9 +215,11 @@ function startAppWithBuffer(buffer) {
         testSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
 
-    updateLiveHighlighter();
-    typingArea.value = "";
+    setTypingValue("");
+    typingArea.disabled = false;
     lastValidInput = "";
+    originalTextDisplay.scrollTop = 0;
+    updateLiveHighlighter();
     typingArea.focus();
 }
 
@@ -184,6 +231,16 @@ setupForm.addEventListener('submit', (e) => {
     if (source === 'upload') {
         const file = fileInput.files[0];
         if (!file) return;
+        if (file.size === 0) {
+            alert("Die ausgewählte Datei ist leer.");
+            fileInput.value = "";
+            return;
+        }
+        if (file.size > MAX_TEXT_LENGTH * 4) {
+            alert(`Die ausgewählte Datei ist zu groß. Maximal erlaubt sind ${MAX_TEXT_LENGTH.toLocaleString('de-DE')} Zeichen.`);
+            fileInput.value = "";
+            return;
+        }
         const reader = new FileReader();
         reader.onload = (evt) => startAppWithBuffer(evt.target.result);
         reader.readAsArrayBuffer(file);
@@ -217,40 +274,46 @@ function updateTimerDisplay() {
 function startTimer() {
     hasStarted = true;
     isTestActive = true;
+    startTime = Date.now();
+    endTime = startTime + totalSeconds * 1000;
     btnEarlyFinish.classList.remove('hidden');
+    btnEarlyFinish.classList.add('inline-flex');
 
     timerInterval = setInterval(() => {
-        timeLeft--;
+        const remainingMs = endTime - Date.now();
+        timeLeft = Math.max(0, Math.ceil(remainingMs / 1000));
         updateTimerDisplay();
-        if (timeLeft <= 0) finishTest();
-    }, 1000);
+        if (remainingMs <= 0) finishTest();
+    }, 250);
 }
 
-/**
- * Berechnet die Gesamtanschläge unter Berücksichtigung von 
- * Großbuchstaben und Sonderzeichen (die Shift benötigen = 2 Anschläge).
- */
-function calculateTotalStrokes(text) {
-    let strokes = 0;
-    const twoStrokeChars = new Set([
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        'Ä', 'Ö', 'Ü', '!', '"', '§', '$', '%', '&', '/', '(', ')', '=', '?', '\`', ';', ':', '_', '\'', '*', '+', '~', '#', '>', '@', '|', 'µ', '€', '{', '}', '[', ']', '\\'
-    ]);
-    for (let i = 0; i < text.length; i++) {
-        strokes += twoStrokeChars.has(text[i]) ? 2 : 1;
+// Blockierte Input-Typen für das beforeinput-Event (Paste, Drop, Autokorrektur-Ersetzung)
+const BLOCKED_INPUT_TYPES = new Set([
+    'insertFromPaste',
+    'insertFromPasteAsQuotation',
+    'insertFromDrop',
+    'insertFromYank',
+    'insertReplacementText'
+]);
+
+typingArea.addEventListener('beforeinput', (e) => {
+    if (BLOCKED_INPUT_TYPES.has(e.inputType) || (e.data && e.data.length > 2)) {
+        e.preventDefault();
+        if (e.inputType !== 'insertReplacementText') {
+            alert("Schummeln gilt nicht! Einfügen von Text ist deaktiviert.");
+        }
     }
-    return strokes;
-}
+});
 
 // Haupt-Event-Listener für die Texteingabe
 typingArea.addEventListener('input', (e) => {
-    const currentInput = e.target.value;
+    const currentInput = getTypingValue();
 
     // ANTI-CHEAT-ENGINE
-    // Verhindert das Einfügen von Text per Drag&Drop, Paste oder Console (F12).
-    // Toleranz: 2 Zeichen (nötig für manche mobile Autokorrekturen).
-    if (currentInput.length - lastValidInput.length > 2) {
-        e.target.value = lastValidInput;
+    // Verhindert das Einfügen von Text sowie synthetische Events über die Konsole (F12).
+    // Toleranz: 2 Zeichen als Fallback für mobile Eingabemethoden.
+    if (!e.isTrusted || currentInput.length - lastValidInput.length > 2) {
+        setTypingValue(lastValidInput);
         alert("Schummeln gilt nicht! Einfügen von Text ist deaktiviert.");
         return;
     }
@@ -272,11 +335,29 @@ typingArea.addEventListener('input', (e) => {
 });
 
 /**
+ * Scrollt ausschließlich den Vorlagen-Container (#original-text-display),
+ * sobald das aktuelle Zeichen den komfortablen Sichtbereich verlässt.
+ */
+function keepCharInView(span) {
+    const containerRect = originalTextDisplay.getBoundingClientRect();
+    const spanRect = span.getBoundingClientRect();
+    const padding = 36;
+
+    if (spanRect.bottom > containerRect.bottom - padding || spanRect.top < containerRect.top + padding) {
+        const targetTop = (spanRect.top - containerRect.top) + originalTextDisplay.scrollTop - (containerRect.height / 2) + (spanRect.height / 2);
+        originalTextDisplay.scrollTo({
+            top: Math.max(0, targetTop),
+            behavior: 'smooth'
+        });
+    }
+}
+
+/**
  * Aktualisiert die visuelle Hervorhebung (Fokus-Modus) effizient,
  * indem nur die CSS-Klassen der betroffenen Spans geändert werden.
  */
 function updateLiveHighlighter() {
-    const highlightIndex = typingArea.value.length;
+    const highlightIndex = lastValidInput.length;
     if (highlightIndex >= originalText.length) return;
 
     // O(1) Update für normales Tippen (nur 1 Zeichen vorwärts = extrem schnell)
@@ -286,9 +367,7 @@ function updateLiveHighlighter() {
         }
         if (highlightIndex < charSpans.length) {
             charSpans[highlightIndex].className = 'text-red-700 bg-red-200 border-b-2 border-red-500';
-            if (highlightIndex > 0 && highlightIndex % 30 === 0) {
-                charSpans[highlightIndex].scrollIntoView({ behavior: "smooth", block: "center" });
-            }
+            keepCharInView(charSpans[highlightIndex]);
         }
     }
     // Fallback (z.B. bei Löschen mit Backspace) -> alle Spans neu berechnen
@@ -299,9 +378,7 @@ function updateLiveHighlighter() {
                 span.className = 'text-gray-400 border-b-2 border-transparent';
             } else if (i === highlightIndex) {
                 span.className = 'text-red-700 bg-red-200 border-b-2 border-red-500';
-                if (i > 0 && i % 30 === 0) {
-                    span.scrollIntoView({ behavior: "smooth", block: "center" });
-                }
+                keepCharInView(span);
             } else {
                 span.className = 'text-gray-700 border-b-2 border-transparent';
             }
@@ -313,297 +390,62 @@ function updateLiveHighlighter() {
 
 
 // ==============================================================================
-// 6. AUSWERTUNGS-ALGORITHMUS (Modifizierte Levenshtein-Distanz)
-// ==============================================================================
-
-/**
- * Berechnet die präzise Abweichung zwischen Originaltext und geschriebener Eingabe.
- * Modifizierte Kostenfunktion, um das "Verschlucken" von Wörtern zu verhindern.
- * 
- * @param {string} orig - Der originale Vorlagentext
- * @param {string} typed - Die Eingabe des Schülers
- * @returns {Object} Ein Objekt mit dem Berechnungspfad und dem besten End-Index
- */
-function calculatePrefixDiff(orig, typed) {
-    const n = orig.length;
-    const m = typed.length;
-    if (m === 0) return { path: [], best_i: 0 };
-
-    // Matrix Initialisierung
-    const dp = new Int32Array((n + 1) * (m + 1));
-    const get = (i, j) => dp[i * (m + 1) + j];
-    const set = (i, j, val) => { dp[i * (m + 1) + j] = val; };
-
-    for (let i = 0; i <= n; i++) set(i, 0, i);
-    for (let j = 0; j <= m; j++) set(0, j, j);
-
-    // Matrix befüllen (Kostenberechnung)
-    for (let i = 1; i <= n; i++) {
-        for (let j = 1; j <= m; j++) {
-            if (orig[i - 1] === typed[j - 1]) {
-                set(i, j, get(i - 1, j - 1));
-            } else {
-                set(i, j, Math.min(
-                    get(i - 1, j - 1) + 1, // Substitution (1 Punkt)
-                    get(i - 1, j) + 1,     // Deletion (1 Punkt)
-                    get(i, j - 1) + 1      // Insertion (1 Punkt)
-                ));
-            }
-        }
-    }
-
-    // Den "günstigsten" Endpunkt finden
-    let minCost = Infinity;
-    let best_i = m;
-    for (let i = 0; i <= n; i++) {
-        if (get(i, m) <= minCost) {
-            minCost = get(i, m);
-            best_i = i;
-        }
-    }
-
-    // Backtracing (Pfad-Rückverfolgung)
-    let i = best_i;
-    let j = m;
-    const path = [];
-
-    while (i > 0 || j > 0) {
-        if (i === 0) {
-            path.push({ type: 'ins', orig: null, typed: typed[j - 1] });
-            j--;
-        } else if (j === 0) {
-            path.push({ type: 'del', orig: orig[i - 1], typed: null });
-            i--;
-        } else {
-            const current = get(i, j);
-
-            // Tie-Breaker: Priorisierung bei gleicher Fehlerpunktzahl, 
-            // um korrekte Block-Markierungen bei fehlenden Wörtern zu erzwingen.
-            if (orig[i - 1] !== typed[j - 1] && current === get(i - 1, j - 1) + 1) {
-                // 1. Priorität: Substitution (Verhindert fehlerhaftes Springen bei Buchstabendrehern)
-                path.push({ type: 'sub', orig: orig[i - 1], typed: typed[j - 1] });
-                i--; j--;
-            } else if (current === get(i - 1, j) + 1) {
-                // 2. Priorität: Deletion 
-                path.push({ type: 'del', orig: orig[i - 1], typed: null });
-                i--;
-            } else if (current === get(i, j - 1) + 1) {
-                // 3. Priorität: Insertion 
-                path.push({ type: 'ins', orig: null, typed: typed[j - 1] });
-                j--;
-            } else if (orig[i - 1] === typed[j - 1] && current === get(i - 1, j - 1)) {
-                // 4. Priorität: Match (Übereinstimmung)
-                path.push({ type: 'match', orig: orig[i - 1], typed: typed[j - 1] });
-                i--; j--;
-            }
-        }
-    }
-    return { path: path.reverse(), best_i: best_i };
-}
-
-/**
- * Ordnet jedem Zeichen in einem Text eine Wort-ID zu.
- * Wird verwendet, um Fehler, die innerhalb desselben Wortes auftreten, 
- * als EINEN einzigen Fehler zu gruppieren (Prüfungsstandard).
- */
-function getWordIds(text) {
-    const ids = new Array(text.length).fill(-1);
-    let currentId = 0;
-    let inWord = false;
-    const isSeparator = (c) => c === ' ' || c === '\n' || c === '\r' || c === '-';
-
-    for (let i = 0; i < text.length; i++) {
-        if (isSeparator(text[i])) {
-            inWord = false;
-        } else {
-            if (!inWord && i > 0) currentId++;
-            ids[i] = currentId;
-            inWord = true;
-        }
-    }
-    return ids;
-}
-
-
-// ==============================================================================
-// 7. BEENDIGUNG & ZEUGNIS-GENERIERUNG
+// 6. BEENDIGUNG & ZEUGNIS-GENERIERUNG
 // ==============================================================================
 
 function finishTest() {
+    if (hasFinished) return;
+    hasFinished = true;
+
+    if (closeConfirmModal) closeConfirmModal();
+
     clearInterval(timerInterval);
     typingArea.disabled = true;
     isTestActive = false;
 
-    const typedText = typingArea.value;
+    // Nur den durch echte Tastatureingaben validierten Text auswerten (Schutz gegen DOM-Manipulation)
+    setTypingValue(lastValidInput);
+    const typedText = lastValidInput;
 
-    const timeUsed = totalSeconds - timeLeft;
+    const elapsedMs = hasStarted
+        ? Math.min(totalSeconds * 1000, Math.max(0, Date.now() - startTime))
+        : 0;
+    const elapsedSeconds = elapsedMs / 1000;
+    const timeUsed = Math.round(elapsedSeconds);
     const m = String(Math.floor(timeUsed / 60)).padStart(2, '0');
     const s = String(timeUsed % 60).padStart(2, '0');
 
-    // Statistik ausfüllen
+    // Dauer & Originaltext anzeigen
     document.getElementById('res-dauer').textContent = `${m}:${s}`;
-
-    // Originaltext für den Vergleich anzeigen
-    const lookahead = Math.min(originalText.length, typedText.length + 200);
-    const origSub = originalText.substring(0, lookahead);
     document.getElementById('res-original-text').textContent = originalText;
-    
-    // Differenz berechnen
-    const { path } = calculatePrefixDiff(origSub, typedText);
 
-    // Wort-Gruppierung (Union-Find) für das korrekte Zählen der Fehler
-    const origWordIds = getWordIds(origSub);
-    const typedWordIds = getWordIds(typedText);
+    // Reine Auswertungslogik (evaluation.js) aufrufen
+    const { anschlaege, fehler, quotient, tokens } = evaluate(originalText, typedText);
 
-    const parent = {};
-    function find(i) {
-        if (parent[i] === undefined) parent[i] = i;
-        if (parent[i] !== i) parent[i] = find(parent[i]);
-        return parent[i];
-    }
-    function union(i, j) {
-        const rootI = find(i);
-        const rootJ = find(j);
-        if (rootI !== rootJ) parent[rootI] = rootJ;
-    }
-
-    const errorNodes = new Set();
-    let pureSeparatorErrors = 0;
-
-    let oIdx = 0;
-    let tIdx = 0;
-    let inErrorBlock = false;
-    let blockHasWordChar = false;
-
-    const evaluatedContainer = document.getElementById('evaluated-text');
-    evaluatedContainer.innerHTML = '';
-    
-    // Wort-IDs des allerletzten Wortes im Text ermitteln
-    let tempOIdx = 0, tempTIdx = 0;
-    let lastO = -1, lastT = -1;
-    for (let op of path) {
-        if (op.orig !== null && origWordIds[tempOIdx] !== -1) lastO = origWordIds[tempOIdx];
-        if (op.typed !== null && typedWordIds[tempTIdx] !== -1) lastT = typedWordIds[tempTIdx];
-        if (op.orig !== null) tempOIdx++;
-        if (op.typed !== null) tempTIdx++;
-    }
-
-    // Korrigierte Anschläge berechnen ---
-    let firstErrorInLastWordIdx = typedText.length;
-    let scanOIdx = 0;
-    let scanTIdx = 0;
-
-    for (let op of path) {
-        let isWordCharOrig = op.orig !== null && origWordIds[scanOIdx] !== -1;
-        let isWordCharTyped = op.typed !== null && typedWordIds[scanTIdx] !== -1;
-        
-        let isLastWord = false;
-        if (isWordCharOrig && origWordIds[scanOIdx] === lastO) isLastWord = true;
-        if (isWordCharTyped && typedWordIds[scanTIdx] === lastT) isLastWord = true;
-
-        // Wenn wir uns im letzten Wort befinden und es KEIN Treffer ('match') ist,
-        // merken wir uns den exakten Index des Fehlers im getippten Text und brechen ab.
-        if (isLastWord && op.type !== 'match') {
-            firstErrorInLastWordIdx = scanTIdx;
-            break; 
-        }
-
-        if (op.orig !== null) scanOIdx++;
-        if (op.typed !== null) scanTIdx++;
-    }
-
-    // Schneidet den Text exakt vor dem ersten Fehler im letzten Wort ab
-    const correctedTypedText = typedText.substring(0, firstErrorInLastWordIdx);
-    
-    // Anschläge auf Basis des korrigierten Textes berechnen (Die Variable ist jetzt wieder verfuegbar)
-    const anschlaege = calculateTotalStrokes(correctedTypedText);
-
-    // APM mit den neuen, sauberen Anschlägen berechnen
+    // APM mit den gewerteten Anschlägen und exakter Laufzeit berechnen
     let apm = 0;
-    if (timeUsed > 0) {
-        apm = Math.round((anschlaege / timeUsed) * 60);
-    } else if (anschlaege > 0 && timeUsed === 0) {
+    if (elapsedSeconds > 0) {
+        apm = Math.round((anschlaege / elapsedSeconds) * 60);
+    } else if (anschlaege > 0) {
         apm = anschlaege;
     }
-    document.getElementById('res-apm').textContent = apm;
 
-    // Render-Loop basierend auf dem berechneten Pfad
-    for (let i = 0; i < path.length; i++) {
-        let op = path[i];
+    // Gewerteten Text ins DOM rendern
+    const evaluatedContainer = document.getElementById('evaluated-text');
+    evaluatedContainer.innerHTML = '';
 
-        let isWordCharOrig = op.orig !== null && origWordIds[oIdx] !== -1;
-        let isWordCharTyped = op.typed !== null && typedWordIds[tIdx] !== -1;
-        
-        // Prüfen, ob das aktuelle Zeichen zum letzten Wort gehört
-        let isLastWord = false;
-        if (isWordCharOrig && origWordIds[oIdx] === lastO) isLastWord = true;
-        if (isWordCharTyped && typedWordIds[tIdx] === lastT) isLastWord = true;
-
-        let oNode = isWordCharOrig ? 'O' + origWordIds[oIdx] : null;
-        let tNode = isWordCharTyped ? 'T' + typedWordIds[tIdx] : null;
-
-        if (op.type === 'match') {
-            if (inErrorBlock) {
-                if (!blockHasWordChar) pureSeparatorErrors++;
-                inErrorBlock = false;
-                blockHasWordChar = false;
-            }
-            if (oNode && tNode) union(oNode, tNode);
+    for (const token of tokens) {
+        if (token.type === 'match') {
+            evaluatedContainer.appendChild(document.createTextNode(token.char));
+        } else if (token.type === 'del') {
+            evaluatedContainer.appendChild(createMissingCharNode(token.isLastWord));
         } else {
-            if (!inErrorBlock) {
-                inErrorBlock = true;
-                blockHasWordChar = false;
-            }
-            if (isWordCharOrig || isWordCharTyped) {
-                blockHasWordChar = true;
-                if (oNode) errorNodes.add(oNode);
-                if (tNode) errorNodes.add(tNode);
-                if (oNode && tNode) union(oNode, tNode);
-            }
+            evaluatedContainer.appendChild(createErrorNode(token.char, token.isLastWord));
         }
-
-        // Visuelles Rendering des Textes
-        if (op.type !== 'match') {
-            if (op.type === 'sub' || op.type === 'ins') {
-                evaluatedContainer.appendChild(createErrorNode(op.typed, isLastWord));
-            }
-            else if (op.type === 'del') {
-                // Für jedes fehlende Zeichen exakt ein ^ setzen
-                evaluatedContainer.appendChild(createMissingCharNode(isLastWord));
-            }
-        } else {
-            evaluatedContainer.appendChild(document.createTextNode(op.typed));
-        }
-
-        if (op.orig !== null) oIdx++;
-        if (op.typed !== null) tIdx++;
-    }
-
-    if (inErrorBlock && !blockHasWordChar) {
-        pureSeparatorErrors++;
-    }
-
-    // Finale Fehleranzahl ermitteln
-    const uniqueErrors = new Set();
-    const lastWordRootO = lastO !== -1 ? find('O' + lastO) : null;
-    const lastWordRootT = lastT !== -1 ? find('T' + lastT) : null;
-    
-    for (let node of errorNodes) {
-        let root = find(node);
-        // Fehlerpunkte, die zum letzten Wort gehören, werden nicht gezählt!
-        if (root !== lastWordRootO && root !== lastWordRootT) {
-            uniqueErrors.add(root);
-        }
-    }
-
-    let fehler = uniqueErrors.size + pureSeparatorErrors;
-    let quotient = "0,000"; // Als String initialisieren, damit replace() immer funktioniert
-    
-    if (anschlaege > 0) {
-        quotient = (fehler * 100 / anschlaege).toFixed(3).replace('.', ',');
     }
 
     // Finale Ergebnisse ins DOM schreiben
+    document.getElementById('res-apm').textContent = apm;
     document.getElementById('res-anschlaege').textContent = anschlaege;
     document.getElementById('res-fehler').textContent = fehler;
     document.getElementById('res-quotient').textContent = quotient + ' %';
@@ -644,17 +486,22 @@ function createMissingCharNode(isLastWord = false) {
  * Setzt die Applikation komplett zurück, ohne die Seite neu zu laden (SPA Verhalten).
  */
 function resetApp() {
+    if (closeConfirmModal) closeConfirmModal();
     clearInterval(timerInterval);
 
     hasStarted = false;
     isTestActive = false;
+    hasFinished = false;
+    startTime = 0;
+    endTime = 0;
     lastValidInput = "";
 
-    typingArea.value = "";
+    setTypingValue("");
     typingArea.disabled = false;
 
     document.getElementById('live-anschlaege').textContent = "0";
     btnEarlyFinish.classList.add('hidden');
+    btnEarlyFinish.classList.remove('inline-flex');
 
     testSection.classList.add('hidden');
     resultSection.classList.add('hidden');
@@ -672,18 +519,40 @@ function showConfirmModal() {
         const btnNo = document.getElementById('btn-confirm-no');
 
         modal.classList.remove('hidden');
+        btnNo.focus();
 
         const cleanup = () => {
             modal.classList.add('hidden');
             btnYes.removeEventListener('click', onYes);
             btnNo.removeEventListener('click', onNo);
+            document.removeEventListener('keydown', onKeyDown);
+            closeConfirmModal = null;
         };
 
-        const onYes = () => { cleanup(); resolve(true); };
-        const onNo = () => { cleanup(); resolve(false); };
+        const onYes = () => {
+            cleanup();
+            resolve(true);
+        };
+        const onNo = () => {
+            cleanup();
+            if (isTestActive) typingArea.focus();
+            resolve(false);
+        };
+        const onKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                onNo();
+            }
+        };
+
+        closeConfirmModal = () => {
+            cleanup();
+            resolve(false);
+        };
 
         btnYes.addEventListener('click', onYes);
         btnNo.addEventListener('click', onNo);
+        document.addEventListener('keydown', onKeyDown);
     });
 }
 
@@ -693,7 +562,7 @@ function showConfirmModal() {
 async function handleNeueAbschriftClick() {
     if (hasStarted && isTestActive) {
         const confirmed = await showConfirmModal();
-        if (!confirmed) return;
+        if (!confirmed || !isTestActive) return;
     }
     resetApp();
 }
@@ -703,7 +572,7 @@ async function handleNeueAbschriftClick() {
  */
 async function handleEarlyFinishClick() {
     // Prüfen, ob das Textfeld komplett leer ist
-    if (typingArea.value.trim().length === 0) {
+    if (lastValidInput.trim().length === 0) {
         alert("Die Abschrift kann nicht beendet werden, da noch kein Text eingegeben wurde.");
         typingArea.focus(); // Setzt den Cursor wieder zurück ins Feld
         return; // Bricht die Funktion hier ab
@@ -711,7 +580,14 @@ async function handleEarlyFinishClick() {
 
     if (hasStarted && isTestActive) {
         const confirmed = await showConfirmModal();
-        if (!confirmed) return;
+        if (!confirmed || !isTestActive) return;
     }
     finishTest();
 }
+
+// Globale Handler für HTML-Inline-Events bereitstellen
+window.handleNeueAbschriftClick = handleNeueAbschriftClick;
+window.handleEarlyFinishClick = handleEarlyFinishClick;
+window.resetApp = resetApp;
+
+})();

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tipptrainer.eu</title>
-	<meta name="description" content="Tippen Lernen | Üben | Abschriften anfertigen - kostenlos, 100 % datenschutzkonform, ohne Anmeldung und direkt im Browser.">
+    <title>tipptrainer.eu – Tippen lernen, üben &amp; Abschriften anfertigen</title>
+    <meta name="description" content="Kostenloser 10-Finger-Tipptrainer für Schule und Unterricht: Tippen lernen, üben und prüfungskonforme Abschriften anfertigen – 100 % datenschutzkonform und direkt im Browser.">
     <link rel="canonical" href="https://tipptrainer.eu" />
     
     <!-- Favicons -->
@@ -16,6 +16,7 @@
 
     <!-- Konfiguration & Zentrale Logik -->
     <script src="config.js" defer></script>
+    <script src="evaluation.js" defer></script>
     <script src="app.js" defer></script>
 </head>
 <body class="min-h-screen p-4 md:p-8 font-sans text-gray-600 bg-gray-50">
@@ -59,9 +60,9 @@
                             <label class="block text-sm font-semibold uppercase tracking-wider text-gray-600" for="duration-slider">Dauer der Abschrift</label>
                             <span id="duration-display" class="px-3 py-1 font-mono text-lg font-bold text-sky-600 bg-sky-50 rounded">10:00</span>
                         </div>
-                        <input type="range" id="duration-slider" min="0" max="1200" step="10" value="600" class="w-full h-2 bg-gray-200 accent-sky-600 rounded-lg appearance-none cursor-pointer">
+                        <input type="range" id="duration-slider" min="30" max="1200" step="10" value="600" class="w-full h-2 bg-gray-200 accent-sky-600 rounded-lg appearance-none cursor-pointer">
                         <div class="flex justify-between mt-2 text-xs text-gray-600">
-                            <span>0 Min</span>
+                            <span>30 s</span>
                             <span>20 Min</span>
                         </div>
                     </div>
@@ -91,7 +92,7 @@
                         <!-- Upload Container -->
                         <div id="file-upload-container">
                             <input type="file" id="file-input" accept=".txt" required class="w-full px-4 py-2 border border-gray-300 rounded-lg cursor-pointer file:mr-4 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-sky-700 file:bg-sky-50 file:border-0 file:rounded-full hover:file:bg-sky-100">
-                            <p class="mt-2 ml-1 text-xs text-gray-600">Zugelassen: .txt Datei (ANSI oder UTF-8)</p>
+                            <p class="mt-2 ml-1 text-xs text-gray-600">Zugelassen: .txt Datei (ANSI oder UTF-8, max. 20.000 Zeichen)</p>
                         </div>
 
                         <!-- Vorlagen Container -->
@@ -116,8 +117,8 @@
         <!-- ==========================================
              2. TEST-BEREICH (Eigentliche Abschrift)
              ========================================== -->
-        <!-- MAXIMAL-HÖHE FÜR FULLSCREEN ANGEPASST: Nutzt die Bildschirmhöhe minus Body-Padding -->
-        <section id="test-section" class="hidden flex flex-col h-[calc(100vh)] min-h-[500px] max-h-[1200px] py-2 no-print">
+        <!-- MAXIMAL-HÖHE FÜR FULLSCREEN ANGEPASST: Nutzt die dynamische Viewport-Höhe (100dvh) -->
+        <section id="test-section" class="hidden flex flex-col h-dvh min-h-[500px] max-h-[1200px] py-2 no-print">
             
             <!-- Live-Statistik (Kopfzeile) -->
             <div class="flex flex-col md:flex-row items-center justify-between shrink-0 mb-3 p-3 bg-white border border-gray-300 rounded-xl shadow-sm">
@@ -147,7 +148,7 @@
                 <!-- Eingabefeld & Steuerung -->
                 <div class="flex flex-col flex-1 min-h-0 p-4 bg-white border border-gray-300 rounded-xl shadow-sm">
                     <h2 class="shrink-0 mb-2 text-sm font-semibold uppercase tracking-wider text-gray-600">Deine Eingabe</h2>
-                    <textarea id="typing-area" class="flex-1 w-full min-h-0 p-3 font-mono text-lg leading-relaxed border border-gray-300 rounded-lg resize-none overflow-y-auto focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="Sobald du den ersten Buchstaben tippst, startet der Timer..." onpaste="return false;" ondrop="return false;" spellcheck="false"></textarea>
+                    <textarea id="typing-area" class="flex-1 w-full min-h-0 p-3 font-mono text-lg leading-relaxed border border-gray-300 rounded-lg resize-none overflow-y-auto focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="Sobald du den ersten Buchstaben tippst, startet der Timer..." onpaste="return false;" ondrop="return false;" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off" data-gramm="false"></textarea>
                 </div>
 
                 <div class="flex items-center justify-between shrink-0 min-h-[40px]">
@@ -158,7 +159,7 @@
                     </button>
 
                     <!-- Button: Vorzeitig beenden -->
-                    <button type="button" id="btn-early-finish" onclick="handleEarlyFinishClick()" class="hidden inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-300 rounded-lg shadow-sm transition-colors hover:text-red-700 hover:bg-red-100">
+                    <button type="button" id="btn-early-finish" onclick="handleEarlyFinishClick()" class="hidden items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-300 rounded-lg shadow-sm transition-colors hover:text-red-700 hover:bg-red-100">
                         Abschrift vorzeitig beenden
                         <svg class="fill-current" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z"/></svg>
                     </button>
@@ -261,12 +262,12 @@
     <!-- ==========================================
          POPUP MODAL (Bestätigung bei Abbruch)
          ========================================== -->
-    <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 no-print">
+    <div id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 no-print">
         <div class="w-full max-w-sm mx-4 p-6 bg-white border border-gray-300 rounded-xl shadow-lg">
-            <h3 class="mb-6 text-center text-lg font-medium text-gray-600">Soll die Abschrift wirklich beendet werden?</h3>
+            <h3 id="confirm-modal-title" class="mb-6 text-center text-lg font-medium text-gray-600">Soll die Abschrift wirklich beendet werden?</h3>
             <div class="flex justify-center space-x-4">
-                <button id="btn-confirm-yes" class="px-6 py-2 font-medium text-white bg-sky-600 rounded-lg transition-colors hover:bg-sky-700">Ja</button>
-                <button id="btn-confirm-no" class="px-6 py-2 font-medium text-gray-600 bg-gray-100 rounded-lg transition-colors hover:bg-gray-200">Nein</button>
+                <button type="button" id="btn-confirm-yes" class="px-6 py-2 font-medium text-white bg-sky-600 rounded-lg transition-colors hover:bg-sky-700">Ja</button>
+                <button type="button" id="btn-confirm-no" class="px-6 py-2 font-medium text-gray-600 bg-gray-100 rounded-lg transition-colors hover:bg-gray-200">Nein</button>
             </div>
         </div>
     </div>

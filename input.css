@@ -28,17 +28,6 @@
     border-radius: 2px;
 }
 
-/* Visuelle Hervorhebung für ausgelassene Zeichen (Deletion) */
-.typed-missing {
-    display: inline-block;
-    width: 5px;
-    height: 1em;
-    background-color: #ef4444;
-    margin: 0 2px;
-    vertical-align: bottom;
-    border-radius: 2px;
-}
-
 /* Visuelle Hervorhebung für das fehlerhafte letzte Wort (Überstrich) */
 .typed-error-last-word {
     background-color: #00a63e;
@@ -135,13 +124,6 @@
         text-decoration: underline solid #000 !important;
         text-underline-offset: 3px !important;
         text-decoration-skip-ink: none !important;
-    }
-
-    /* Ausgelassene Zeichen: Tiefschwarzer Block statt farbig, um maximalen Kontrast zu garantieren */
-    .typed-missing {
-        background-color: #000 !important;
-        width: 8px !important;
-        border: 1px solid #000 !important;
     }
     
     /* Schwarz-Weiß-Optimierung für das letzte Wort (einfacher Überstrich) */
